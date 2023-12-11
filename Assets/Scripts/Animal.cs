@@ -1,9 +1,10 @@
 using UnityEngine;
-using static Animal;
+using UnityEngine.UI;
 
 public class Animal : MonoBehaviour
 {
-    public enum AnimalType
+    // Enum defining types of animals
+    protected enum AnimalType
     {
         Lion,
         Tiger,
@@ -12,119 +13,155 @@ public class Animal : MonoBehaviour
         Giraffe
     }
 
-    public enum MovementState
+    // Enum defining movement states
+    protected enum MovementState
     {
         Idle,
         Moving,
         Stopping
     }
 
-    public enum FoodType
-    {
-        Meat,
-        Vegetables
-    }
-
     [Header("Animal Type")]
     [SerializeField] protected AnimalType animalType;
-    [SerializeField] protected FoodType favoriteFood;
-    [SerializeField] protected FoodType animalDiet;
-    [SerializeField] protected float hunger = 100f;
-    [SerializeField] protected float thirst = 100f;
-    [SerializeField] protected float sleepiness = 100f;
+    [SerializeField] protected FoodType diet;
 
+    [Header("Meters")]
+    [SerializeField] public float hungerMeter = 100f;
+    [SerializeField] public float thirstMeter = 100f;
+    [SerializeField] public float tiredMeter = 100f;
 
     [Header("Movement")]
-    [SerializeField] protected float minSpeed = 3f;
-    [SerializeField] protected float maxSpeed = 8f;
-    protected float moveSpeed;
-    [SerializeField] protected float minStopTime = 2f;
-    [SerializeField] protected float maxStopTime = 8f;
+    [SerializeField] private float minSpeed = 3f;
+    [SerializeField] private float maxSpeed = 8f;
+    private float moveSpeed;
+    [SerializeField] public float minStopTime = 2f;
+    [SerializeField] public float maxStopTime = 8f;
 
-    protected int currentHunger;
-    protected int currentThirst;
-    protected int currentFatigue;
+    [Header("Timer")]
+    [SerializeField] private float timer = 0;
 
-
-    protected Vector2 randomDirection;
-    protected MovementState movementState = MovementState.Idle;
-    protected float stopTime;
+    [Header("UI Sliders")]
+    public Slider hungerSlider;
+    public Slider thirstSlider;
+    public Slider tirednessSlider;
 
     protected Rigidbody2D rb2D;
+    protected MovementState movementState = MovementState.Idle;
+    private Vector2 randomDirection;
+    private float stopTime;
 
-
-    protected void Start()
+    // Initialization, invoked at the start of the script
+    public void Start()
     {
         rb2D = GetComponent<Rigidbody2D>();
-    
-        InvokeRepeating(nameof(GetHungry), 1f, 1f);
-        InvokeRepeating(nameof(GetThirsty), 1f, 1f);
+        InvokeRepeating(nameof(UpdateMeters), 1f, 1f);
         InvokeRepeating(nameof(RandomMovement), 0f, Random.Range(minStopTime, maxStopTime));
+
+        // Set initial slider values
+        UpdateUI();
     }
 
-// Update method called every frame
-    protected void Update()
+    public void Update()
     {
+        HandleUserInput();
+        UpdateUI();
 
-        if (Input.GetKeyUp(KeyCode.D))
+        if (hungerMeter <= 0f || thirstMeter <= 0f || tiredMeter <= 0f)
         {
-            Drink();
-        }
-
-        if (Input.GetKeyUp(KeyCode.S))
-        {
-            MakeSleep();
+            Die();
         }
 
         if (movementState == MovementState.Moving)
         {
             Move();
+            timer += Time.deltaTime;
+
+            if (timer >= 1)
+            {
+                timer = 0;
+            }
         }
     }
 
-// Update method to decrement meters
-    protected void GetHungry()
+    // Handle user input for feeding and caring for the animal
+    public void HandleUserInput()
     {
-        for (int i = 0; i < hunger; i++)
+        if (Input.GetKeyUp(KeyCode.D) && thirstMeter <= 80)
         {
-            hunger -= 0.1f;
+            Drink(20);
         }
-    }
-    protected void GetThirsty()
-    {
-        for (int i = 0; i < thirst; i++)
+
+        if (Input.GetKeyUp(KeyCode.S) && tiredMeter <= 50)
         {
-            thirst -= 0.1f;
+            Sleep(50);
+        }
+        if (Input.GetKeyUp(KeyCode.E) && hungerMeter <= 80)
+        {
+            Eat(FoodType.Leaf);
+        }
+        if (Input.GetKeyUp(KeyCode.E) && hungerMeter <= 80)
+        {
+            Eat(FoodType.Meat);
         }
     }
 
+    // Feed the animal on key press
     public void Eat(FoodType foodToEat)
     {
-        if (foodToEat == animalDiet && currentHunger <= 80)
+        if (foodToEat == diet)
         {
-            currentHunger += 20;
-        }
-    }
-    public void Drink()
-    {
-        if (currentThirst <= 70)
-        {
-            currentThirst += 30;
+            hungerMeter += 20;
         }
     }
 
-    public void MakeSleep()
+    // Give animal water on button press
+    public void Drink(int drinkAmount)
     {
-        if (currentFatigue <= 50)
+        thirstMeter += drinkAmount;
+    }
+
+    // Increase animal's sleep on button press
+    public void Sleep(int sleepTime)
+    {
+        tiredMeter += sleepTime;
+    }
+
+    // Die if neglected
+    public void Die()
+    {
+        Destroy(gameObject);
+    }
+
+    // Update method to decrement meters
+    public void UpdateMeters()
+    {
+        hungerMeter -= 5f;
+        thirstMeter -= 5f;
+        tiredMeter -= 0.5f;
+    }
+
+    // Update method to update UI sliders
+    public void UpdateUI()
+    {
+        if (hungerSlider != null)
         {
-            currentFatigue += 50;
+            hungerSlider.value = hungerMeter / 100f;
+        }
+
+        if (thirstSlider != null)
+        {
+            thirstSlider.value = thirstMeter / 100f;
+        }
+
+        if (tirednessSlider != null)
+        {
+            tirednessSlider.value = tiredMeter / 100f;
         }
     }
 
     // Method to initiate random movement
-    protected void RandomMovement()
+    private void RandomMovement()
     {
-    // Switch between Idle and Stopping states and invoke corresponding methods
         switch (movementState)
         {
             case MovementState.Idle:
@@ -139,42 +176,47 @@ public class Animal : MonoBehaviour
                 break;
         }
 
-    // If in the Moving state, randomize movement direction
         if (movementState == MovementState.Moving)
         {
             RandomizeDirection();
         }
     }
 
-// Method to transition from Moving to Stopping state
-    protected void StopMoving()
+    // Method to transition from Moving to Stopping state
+    private void StopMoving()
     {
         movementState = MovementState.Stopping;
     }
 
-// Method to generate a random movement direction
-    protected void RandomizeDirection()
+    // Method to generate a random movement direction
+    private void RandomizeDirection()
     {
         randomDirection = new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f)).normalized;
     }
 
-// Method to set a random movement speed
-    protected void SetRandomSpeed()
+    // Method to set a random movement speed
+    private void SetRandomSpeed()
     {
         float randomSpeed = Random.Range(minSpeed, maxSpeed);
         moveSpeed = randomSpeed;
     }
 
-// Method to set a random stop time
-    protected void SetRandomStopTime()
+    // Method to set a random stop time
+    private void SetRandomStopTime()
     {
         stopTime = Random.Range(minStopTime, maxStopTime);
     }
 
-// Method to move the animal based on the random direction and speed
-    protected void Move()
+    // Method to move the animal based on the random direction and speed
+    private void Move()
     {
         Vector2 newPosition = rb2D.position + randomDirection * moveSpeed * Time.deltaTime;
         rb2D.MovePosition(newPosition);
     }
+}
+
+public enum FoodType
+{
+    Meat,
+    Leaf,
 }

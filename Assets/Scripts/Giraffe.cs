@@ -5,29 +5,20 @@ using static Animal;
 
 public class Giraffe : Animal
 {
-    protected void Start()
+    void Start()
     {
         base.Start();
         animalType = AnimalType.Giraffe;
-        favoriteFood = FoodType.Vegetables;
     }
 
-    protected void Update()
+    void Update()
     {
-        if (Input.GetKeyUp(KeyCode.V))
+        if (Input.GetKeyUp(KeyCode.E) && hungerMeter <= 80)
         {
-            Eat(FoodType.Vegetables);
+            Eat(FoodType.Leaf);
         }
 
-        GetTired();
         base.Update();
     }
 
-    protected void GetTired()
-    {
-        for (int i = 0; i < sleepiness; i++)
-        {
-            sleepiness -= 0.5f;
-        }
-    }
 }

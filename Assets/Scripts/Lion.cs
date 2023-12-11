@@ -6,25 +6,17 @@ public class Lion : Animal
     {
         base.Start();
         animalType = AnimalType.Lion;
-        favoriteFood = FoodType.Meat;
     }
 
     protected void Update()
     {
-        if (Input.GetKeyUp(KeyCode.M))
+        if (Input.GetKeyUp(KeyCode.E) && hungerMeter <= 80)
         {
             Eat(FoodType.Meat);
         }
 
         base.Update();
-        GetTired();
-    }
-    protected void GetTired()
-    {
-        for (int i = 0; i < sleepiness; i++)
-        {
-            sleepiness -= 0.5f;
-        }
+
     }
 }
 

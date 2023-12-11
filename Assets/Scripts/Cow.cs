@@ -9,24 +9,17 @@ public class Cow : Animal
     {
         base.Start();
         animalType = AnimalType.Cow;
-        favoriteFood = FoodType.Vegetables;
     }
 
     protected void Update()
     {
-        if (Input.GetKeyUp(KeyCode.V))
+        if (Input.GetKeyUp(KeyCode.E) && hungerMeter <= 80)
         {
-            Eat(FoodType.Vegetables);
+            Eat(FoodType.Leaf);
         }
 
         base.Update();
-        GetTired();
+
     }
-    protected void GetTired()
-    {
-        for (int i = 0; i < sleepiness; i++)
-        {
-            sleepiness -= 0.5f;
-        }
-    }
+
 }
